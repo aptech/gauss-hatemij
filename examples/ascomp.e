@@ -31,4 +31,4 @@ YZlevel  = loadd(fname);
 // Specify whether to use log form
 ln_form = 0;
 
-{ YZ_pos, YZ_neg} = cumulativeComp(YZlevel, ln_form);
+{ YZ_pos, YZ_neg } = cumulativeComp(YZlevel, ln_form);
