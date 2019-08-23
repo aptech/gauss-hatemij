@@ -14,11 +14,12 @@
 
 proc(4) = aymCasualitytest(y, ln_form, maxlags, infocrit, intorder, bootmaxiter, pos);
     local CUMDYZpc, CUMDYZnc, z, addlags, numvars, numObs, yT, yLags, xT,
-        yS, yLags, xS, Rvector1, Rmatrix1, AhatTU, leverageTU, AhatTR, leverageTR,
-        AhatSR, leverageSR, Wstat , WCriticalvals, WCriticalvalsS, Azdsys;
+        yS, xS, Rvector1, Rmatrix1, AhatTU, leverageTU, AhatTR, leverageTR,
+        AhatSR, leverageSR, Wstat , WCriticalvals, WCriticalvalsS, Azdsys, ICorder,
+        rejectnullbootS, rejectnullchi, icA, onelA, nocando;
     
     // Find cumulative positive and negative components
-    { CUMDYZpc, CUMDYZnc } = cumulativeComp(YZlevel, ln_form);
+    { CUMDYZpc, CUMDYZnc } = cumulativeComp(y, ln_form);
     
     if pos;
         // Allows for causality test between positive components.
@@ -74,7 +75,7 @@ proc(4) = aymCasualitytest(y, ln_form, maxlags, infocrit, intorder, bootmaxiter,
     
     // Bootstrap critival values
     WcriticalvalsS = Bootstrap_Toda(yT, XT, z[1:(ICorder + addlags),.], AhatSR,
-        leverageSR, ICorder, addlags, bootsimmax, Rmatrix1);
+        leverageSR, ICorder, addlags, bootmaxiter, Rmatrix1);
     
     // Rejection of null
     rejectnullchi = (cdfchic(Wstat, ICorder).<0.01) | (cdfchic(Wstat, ICorder).<0.05) | (cdfchic(Wstat, ICorder).<0.10);
@@ -432,7 +433,7 @@ nocando - 1 if not possible to find suggested lag lengths for the given Z,
 ************************************************************************/
 
 proc (4) = lag_length2(z, minlag, p, infocrit);
-    local M, Y, ylags, T,i, j, lag_guess,X , Ahat, RES, VARCOV, nocando;
+    local M, Y, ylags, T,i, j, lag_guess,X , Ahat, RES, VARCOV, onelA, nocando;
     
     // Number of endog vars
     M = cols(z);
@@ -446,7 +447,7 @@ proc (4) = lag_length2(z, minlag, p, infocrit);
     lag_guess = p;
     
     j = 0;
-    aicfnd = 0;
+//    aicfnd = 0;
     do until (lag_guess < minlag);
         if (lag_guess > 0);
             X = ones(T, 1)~ylags[ . , 1:lag_guess*M];
