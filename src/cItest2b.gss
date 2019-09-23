@@ -5,7 +5,7 @@ unknown structural breaks as suggested by Hatemi-J (2008, Empirical Economics). 
 For critical values see the published paper. */
 
 
-load z[obs,var] =b22.txt;  /* Where obs is the number of your observations, 
+load z[obs,var] = b22.txt;  /* Where obs is the number of your observations, 
 				var is the number of your variables, and
  				b22 is your data file saved in text format.*/
 
@@ -17,7 +17,7 @@ obs = rows(y);
 
 n = obs;
 
-call main(y,x,4,2,12);
+call main(y, x,4,2,12);
 end;
 
 /*************************************************************************
@@ -45,7 +45,7 @@ first observation)
 ****************  Main procedure *******************
 */
 
-proc(0)=main(y,x,model,choice,k);
+proc(0) = coint2b(y,x,model,choice,k);
    local t1,t2,n,final1,final2,begin,tstat,x1,lag,j,dummy1,dummy2,temp1,temp2,temp3,temp4;
    local tstatminc,minlag1ind,bpt1,bpt2,breakpta1,breakpta2,zaminc,za,breakptza1,breakptza2,ztminc,zt,breakptzt1,breakptzt2;
    local b, e1,sig2,se;
