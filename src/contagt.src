@@ -1,0 +1,165 @@
+/*
+** This code is based on the original ContagT.prg file provide by
+** Abdulnasser Hatemi-J
+*/
+
+proc (0) = contagt(y, X, rmax, obslow, obshigh);
+    local D, Ahat, adjres, coeff, coeff1, coeff2, coeff3,
+        sortedcoeff, meansortedcoeff, medianc, obstot;
+    
+    obstot = obslow + obshigh;
+    
+    // Storage matrix
+    D = zeros(obslow,1)|ones(obshigh,1);
+    
+    // Regular OLS
+    { Ahat, adjres } =  __contagtOLS(y, z, D, obstot);
+    
+    // Bootstrap coefficients
+    { coeff, coeff1, coeff2, coeff3 } = __bootstrapContag(Y, X, D, obstot, rmax);
+    
+    // Process coefficients
+    { sortedcoeff, meansortedcoeff, medianc } = __processCoefficients(coeff);
+    
+    // Print results
+    printContagResults(Ahat, sortedcoeff, meansortedcoeff, medianc, coeff1, coeff2, coeff3, rmax);
+endp;
+
+proc (4) = __bootstrapContag(Y, X, D, obstot, rmax);
+    local Yboot, Xboot, Dboot, Zboot, Coeff1, Coeff2, Coeff3,
+        Ahatboot, coeff;
+    
+    // Coefficient storage variables
+    coeff1 = zeros(rmax, 1);
+    coeff2 = zeros(rmax, 1);
+    coeff = zeros(rmax,cols(Z));
+    
+    // Start of Boostrapping Loop
+    for r(1, rmax, 1);
+        // Random sample for bootstrap
+        { Yboot, Xboot, Dboot, Zboot } = __randomSampleContagt(Y, X, D, obstot);
+        
+        // Estimate coefficients
+        Ahatboot = (Inv(Zboot'Zboot)*(Zboot'Yboot))';
+        Coeff1 = Coeff1 + Ahatboot[1, 1];
+        Coeff2 = Coeff2 + Ahatboot[1, 2];
+        Coeff3 = Coeff3 + Ahatboot[1, 3];
+        
+        // Coefficient
+        Coeff[r, 1] = Ahatboot[1, 1];
+        Coeff[r, 2] = Ahatboot[1, 2];
+        Coeff[r, 3] = Ahatboot[1, 3];
+        Coeff[r, 4] = Ahatboot[1, 4];
+        
+    endfor;
+    
+    retp(coeff, coeff1, coeff2, coeff3);
+endp;
+
+proc (9) = __processCoefficients(coeff);
+    local sortedcoeff, medianc, meansortedcoeff;
+    
+    // Sorted coefficients
+    sortedcoeff = zeros(rows(coeff), cols(coeff));
+    for i(1, cols(coeff), 1);
+        sortedcoeff[., i] = sortc(coeff[., i], 1);
+    endfor;
+    
+    // Find mean of coefficient
+    meansortedcoeff = meanc(sortedcoeff[., cols(coeff)]);
+    
+    // Find median of coefficients
+    medianc = zeros(cols(coeff), 1);
+    for k(1, cols(coeff), 1);
+        medianc[k] = median(sortedcoeff[., k]);
+    endfor;
+    
+    retp(sortedcoeff, meansortedcoeff, medianc);
+endp;
+
+proc (0) = printContagResults(Ahat, sortedcoeff, meansortedcoeff, medianc, coeff1, coeff2, coeff3, rmax);
+    "OLS estimates=";;
+    Ahat;
+    
+    Print "***********************************************************************************************************************************";
+    Print "************Mean Bootstrap coefficients";
+    "Mean bootstrap coefficient 1 = ";;
+    coeff1/rmax;;
+    "Median bootstrap coefficient 1=";;
+    medianc[1];
+    "Mean bootstrap coefficient 2 = ";;
+    coeff2/rmax;;
+    "Median bootstrap coefficient 2=";;
+    medianc[2];
+    "Mean bootstrap coefficient 3 = ";;
+    coeff3/rmax;;
+    "Median bootstrap coefficient 3 =";;
+    medianc[3];
+    "Mean bootstrap coefficient 4 = ";;
+    meansortedcoeff ;;
+    "Median bootstrap coefficient 4 =";;
+    medianc[4];
+    
+    Print "***********************************************************************************************************************************";
+    Print "**********P-value based on empirical distribution";
+    
+    for j(1, 4, 1);
+        print "j";
+        j;
+        If medianc[j]  < 0;
+            "Bootstrap p-value==";;
+            (((rmax - counts(Sortedcoeff[., j], 0)) + counts(Sortedcoeff[., j], (2*medianc[j])) )  /rmax);
+        else;
+            " Bootstrap p-value=";;
+            (((counts(Sortedcoeff[., j], 0)) + rmax - counts(Sortedcoeff[., j], (2*medianc[j])) )  /rmax); /* version 2*/
+        endif;
+    endfor;
+    
+endp;
+
+proc (0) =  __printInfoContagt();
+    Print "***********************************************************************************************************************************";
+    Print "This Gauss program performs Hatemi-J and Hacker (2005) pairwise bootstrap test for contagion and it also gives pairwise bootstrap estimators and bootstrap P-values as suggested by the authors!
+        Applied Financial Economics Letters, 1(6)";
+    Print "OBS!!! Using this program in any format without explicit aknowledgment and relevant reference is not allowed!";
+    Print " This program code is the copyright of the authors. For non-Commercial applications only.";
+    Print "No performance guarantee is made. Bug reports are welcome. ";
+    Print " ";
+    Print "***********************************************************************************************************************************";
+endp;
+
+proc (2) = __contagtOLS(y, X, D, obstot);
+    local Z, coeff, InvZTZ, Ahat, varres, t;
+    
+    /*
+    ** Perform Regular OLS and
+    ** process that information
+    */
+    
+    // Independent variables
+    Z = ones(obstot, 1)~D~X~(X.*D);
+    
+    // inv(Z'Z)
+    InvZTZ= Inv(Z'Z);
+    
+    // Estimate coefficients
+    Ahat = InvZTZ*(Z'*Y);
+    
+    // Find residuals
+    varres = Y - Z*Ahat;
+    
+    // T-statistic
+    t = Ahat./(sqrt((varres'varres/(obstot-cols(Z)))*diag(InvZTZ)));
+
+    retp(Ahat, varres);
+endp;
+
+proc (4) = __randomSampleContagt(Y, X, D, obstot);
+    local randomnumbers, index;
+    
+    randomnumbers = rndu(1, obstot);
+    index = 1 + trunc(obstot*randomnumbers);
+    
+    retp(Y[index, 1], X[index, 1], D[index, 1], ones(obstot,1)~D[index, 1]~X[index, 1]~(X[index, 1].*D[index, 1]));
+endp;
+
