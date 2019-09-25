@@ -1,3 +1,4 @@
+#include ascomp.src
 /*
 ** This code is based on the original ACtest.prg file provide by
 ** Abdulnasser Hatemi-J
@@ -114,7 +115,7 @@ restricted to zero; 0 is given otherwise.
 ----EXTERNAL PROCEDURES: none
 ----NB: none.
 **********************************************************************/
-proc(2)=rstrctvm(numvars, varorder, addlags);
+proc (2) = rstrctvm(numvars, varorder, addlags);
     local rvector1, rmatrix1, restnum, ordrcntr, varcntr;
     
     rvector1 = zeros(1,1+numvars*(varorder + addlags));
@@ -138,7 +139,7 @@ endp;
 Addlags
 ----NB: none.
 **********************************************************************/
-proc(1)=azd(addlags);
+proc (1) = azd(addlags);
     local indx;
     indx= 1;
     do until indx > 2;
@@ -163,7 +164,7 @@ endp;
 **                  i.e, the appropriate rows of x(-1)~x(-2)~etc.
 **   GLOBAL VARIABLES: none
 **********************************************************************/
-proc(2)=varlags(var,lags);
+proc (2) = varlags(var,lags);
     local xlags;
     xlags = shiftr((ones(1,lags) .*. var)',seqa(1-lags,1,lags)
         .*. ones(cols(var),1),miss(0,0))';
@@ -199,7 +200,7 @@ proc (2) = estvar_params (y, X, restrict, rvector1, order, addlags);
     T=rows(y);
     If restrict == 1;
         INVXTXXT2 = Inv(X'*X)*X';
-        Ahat2 = (INVXTXXT2*Y[.,2:numvars])';
+        Ahat2 = (INVXTXXT2*Y[. , 2:numvars])';
         /*   H2 = X*INVXTXXT2;
         leverage2 = diag(H2); */
         leverage2= zeros(rows(X),1);
@@ -244,7 +245,7 @@ new: the new vector with zeros inserted according the pattern vector
 ----EXTERNAL PROCEDURES: none
 ----NB: none.
 **********************************************************************/
-proc(1)=insrtzero(orig, pattern);
+proc (1) = insrtzero(orig, pattern);
     local indx, newv, insrtpts;
     insrtpts = indexcat(pattern,1);
     newv = orig;
@@ -493,7 +494,7 @@ proc (4) = lag_length2(z, minlag, p, infocrit);
     retp(iclag, icA, onelA, nocando);
 endp;
 
-proc __printLags(iclag, infocrit, maxlags);
+proc (0) = __printLags(iclag, infocrit, maxlags);
     
     format /rd 5,3;
     "Information criterion used; lags based on that =";;
@@ -518,7 +519,7 @@ proc __printLags(iclag, infocrit, maxlags);
     endif;
 endp;
 
-proc(1) = __getic(VARCOV, T, M, lag_guess, infocrit, maxlags);
+proc (1) = __getic(VARCOV, T, M, lag_guess, infocrit, maxlags);
     local hqc, sbc;
     
     If infocrit == 1;
@@ -526,7 +527,7 @@ proc(1) = __getic(VARCOV, T, M, lag_guess, infocrit, maxlags);
         retp(ln(det(VARCOV)) + (2/T)*(M*M*lag_guess +M)+ M*(1+ln(2*pi)));
     elseif infocrit == 2;
         retp(ln(det(VARCOV)) + ((T + (1+lag_guess*M))*M)/(T - (1+lag_guess*M) - M -1));
-    elseif infocrit == 3 or infocrit == 5;
+    elseif infocrit == 3;
         sbc = ln(det(VARCOV)) + (1/T)*(M*M*lag_guess+M)*ln(T)+ M*(1+ln(2*pi));
         
         if infocrit == 3;
@@ -537,15 +538,16 @@ proc(1) = __getic(VARCOV, T, M, lag_guess, infocrit, maxlags);
         
         if infocrit == 4;
             retp(hqc);
+        elseif infocrit == 5;
+            sbc = ln(det(VARCOV)) + (1/T)*(M*M*lag_guess+M)*ln(T)+ M*(1+ln(2*pi));
+            retp((sbc + hqc)/2);
         endif;
-    elseif infocrit == 5;
-        retp((sbc + hqc)/2);
     elseif infocrit == 6;
         retp(maxlags);
     endif;
 endp;
 
-proc __printInfoACTest();
+proc (0) =  __printInfoACTest();
     Print " This program performs an asymmetric causality test developed by Hatemi-J (2012).
         Reference: Hatemi-J (2012) Asymmetric Causality Tests with an Application, Empirical Economics, forthcoming";
     Print " ";

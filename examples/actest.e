@@ -1,3 +1,5 @@
+#include actest.src
+
 /*
 ** This code is based on the original ACtest.prg file provide by
 ** Abdulnasser Hatemi-J
@@ -21,10 +23,11 @@ outwidth 200;
 
 // Indicate filename can be .csv, .xls, .xlsx,
 // .dat, .dta, SAS7BDAT, SAS7BCAT, HDF5
-fname = ;
+fname = __FILE_DIR $+ "/nelsonplosser.dta";
+formula = "m+bnd";
 
 // Load data file
-YZlevel  = loadd(fname);
+YZlevel  = packr(loadd(fname, formula));
 
 // Specify whether to use log form
 ln_form = 0;
@@ -34,7 +37,7 @@ rndseed 30540;
 // The maximum # of simulations
 // for computing bootstrapped critical
 // values. It should be a multiple of 20
-bootsimmax = 1000;
+bootmaxiter = 1000;
 
 // Information criterion used:
 // 1=AIC, 2=AICC, 3=SBC,
@@ -51,4 +54,10 @@ maxlags = 4;
 // in order to account for the unit root.
 intorder = 1;
 
-{ Wstat, WcriticalvalsS, ICOrder, Azdsys } = aymCasualitytest(y, ln_form, maxlags, infocrit, intorder, bootmaxiter, pos);
+// This sets whether to use the positive components 
+// Set to 1 use positive components
+// 0 to use negative components
+pos = 1;
+
+// Call for asymetric test
+{ Wstat, WcriticalvalsS, ICOrder, Azdsys } = aymCasualitytest(YZlevel, ln_form, maxlags, infocrit, intorder, bootmaxiter, pos);
