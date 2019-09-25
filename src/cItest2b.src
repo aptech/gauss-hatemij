@@ -2,6 +2,50 @@
 ****************  Main procedure *******************
 */
 
+/*
+**  coint2b
+**
+**  Purpose:
+**  
+**  Format:  call  coint2b(y, x, model, choice, k)
+**
+**  Input
+**          y           Vector, dependent variable
+**
+**          x           Matrix, independent variables (first row is first observation)
+**
+**          Model       Scalar, choice for model        
+**                      Options: 
+**                          2       Constant 
+**                          3       Constant and Trend 
+**                          4       Constant and Seasonality
+**                            
+**         choice       Scalar, lags used in ADF test
+**                      Options
+**                          1       pre-specified AR lag
+**                          2       AIC-chosen AR lag
+**                          3       BIC-chosen AR lag
+**                          4       Downward-t-chosen AR lag
+**
+**          k            Scalar, maximum lag for ADF test
+**
+** Output: 
+**          Za           Test statistics
+**
+**          Bp_za        Breakpoint for Za*
+**
+**          Zt           Test statistics
+**          
+**          Bp_zt        Breakpoint for Zt*
+**
+**          ADF          Test statistics
+**          
+**          BP_adf       Breakpoint for ADF* 
+**
+**          lags        AR lag chosen for ADF*
+**
+*/
+
 proc(0) = coint2b(y, x, model, choice, k);
     local t1, t2, n, final1, final2, begin, tstat, x1, lag, j, dummy1, dummy2, temp1, temp2, temp3, temp4;
     local tstatminc, minlag1ind, bpt1, bpt2, breakpta1, breakpta2, zaminc, za, breakptza1,
