@@ -98,73 +98,83 @@ proc(4) = aymCasualitytest(y, ln_form, maxlags, infocrit, intorder, bootmaxiter,
 endp;
 
 
-/**********************  PROC RSTRCTVM *****************************
-----PROC rstrctvm
-----AUTHOR: Scott Hacker (in cooperation with A. Hatemi-J)
-----INPUT:
-numvars: number of variables in VAR sytem
-varorder: order of the VAR system
-addlags: number of additional lags
-----OUTPUT:
-Rvector1: a row vector corresponding to the coefficients in the the first row of a VAR system,
-with 1 indicating where a 0 restriction is placed and 0 indicating not.
-Rmatrix1: a matrix with each row indicating where one constraint is placed on
-a vectorization of the coefficients in a VAR system. A 1 indicates which coefficient is
-restricted to zero; 0 is given otherwise.
-----GLOBAL VARIABLES: none
-----EXTERNAL PROCEDURES: none
-----NB: none.
-**********************************************************************/
+/*
+**  { rvector1, rmatrix1 } = rstrctvm(numvars, varorder, addlags)
+**
+**  Author: Scott Hacker (in cooperation with A. Hatemi-J)
+**
+**  Input:
+**        Numvars     Scalar, number of variables in VAR sytem.
+**
+**        Varorder    Scalar, order of the VAR system.
+**          
+**        addlags     Scalar, number of additional lags.
+**
+**  Output:
+**        Rvector1    A row vector corresponding to the coefficients in the the first row of a VAR system,
+**                    with 1 indicating where a 0 restriction is placed and 0 indicating not.
+**
+**       Rmatrix1:    Matrix with each row indicating where one constraint is placed on
+**                    a vectorization of the coefficients in a VAR system. A 1 indicates which coefficient is
+**                    restricted to zero; 0 is given otherwise.
+*/
 proc (2) = rstrctvm(numvars, varorder, addlags);
     local rvector1, rmatrix1, restnum, ordrcntr, varcntr;
     
-    rvector1 = zeros(1,1+numvars*(varorder + addlags));
+    rvector1 = zeros(1, 1+numvars*(varorder + addlags));
     rmatrix1 = zeros(varorder,(1+numvars*(varorder+addlags))*numvars);
     
     ordrcntr = 1;
     do until ordrcntr > varorder;
-        rvector1[1,1+(ordrcntr-1)*numvars+2] = 1;
-        rmatrix1[ordrcntr,1+((ordrcntr-1)*numvars+2)*numvars]=1;
-        ordrcntr = ordrcntr +1;
+        rvector1[1, 1+(ordrcntr-1)*numvars+2] = 1;
+        rmatrix1[ordrcntr, 1+((ordrcntr-1)*numvars+2)*numvars] = 1;
+        ordrcntr = ordrcntr + 1;
     endo;
     
-    retp(rvector1,rmatrix1);
+    retp(rvector1, rmatrix1);
 endp;
 
 
-/**********************  PROC Azd *****************************
-----PROC azd
-----AUTHOR: Scott Hacker
-----INPUT:
-Addlags
-----NB: none.
-**********************************************************************/
+/*
+**  indx = azd(addlags)
+**
+**  Author: Scott Hacker
+**
+**  Input:
+**      addlags     Number of lags to be added.
+**
+**  Output:
+**      indx        New indx.
+*/
 proc (1) = azd(addlags);
     local indx;
     indx= 1;
     do until indx > 2;
-        indx = indx+1;
+        indx = indxb+b1;
     endo;
     retp(indx);
 endp;
 
-/**********************  PROC VARLAGS  *****************************
+/*
+
 **   Author: Alan G. Isaac
 **   last update: 5 Dec 95      previous: 15 June 94
-**   FORMAT
-**          { x,xlags } = varlags(var,lags)
-**   INPUT
-**        var  - T x K matrix
-**        lags - scalar, number of lags of var (a positive integer)
-**   OUTPUT
-**          x -     (T - lags) x K matrix, the last T-lags rows of var
-**          xlags - (T - lags) x lags*cols(var) matrix,
+**   Format
+**          { x, xlags } = varlags(var, lags)
+**   Input
+**        var       T x K matrix
+**
+**        lags      Scalar, number of lags of var (a positive integer)
+**
+**   Output
+**          x       (T - lags) x K matrix, the last T-lags rows of var.
+**
+**          xlags   (T - lags) x lags*cols(var) matrix,
 **                  being the 1st through lags-th
 **                  values of var corresponding to the values in x
 **                  i.e, the appropriate rows of x(-1)~x(-2)~etc.
-**   GLOBAL VARIABLES: none
-**********************************************************************/
-proc (2) = varlags(var,lags);
+*/
+proc (2) = varlags(var, lags);
     local xlags;
     xlags = shiftr((ones(1,lags) .*. var)',seqa(1-lags,1,lags)
         .*. ones(cols(var),1),miss(0,0))';
@@ -172,28 +182,37 @@ proc (2) = varlags(var,lags);
 endp;
 
 
-/*************************************************************************
-----PROC EstVar_Params
-----AUTHOR: Scott Hacker
-----INPUT:
-y  - data matrix adjusted for lags. Each column is a vector of observations on one
-endogenous variable. Currently only works for 2 endog. variables.
-X - a column of ones appended to a matrix of lagged values for y.
-restrict - 1 means restrict the coefficient estimates so there is no Granger causality
-0 means don't do that restriction
-rvector1 - row vector noting which variable coefficients are restricted to zero (1 indicates
-where the restriction is);
-order  - order of var system. This should be = 1 or 2.
-addlags - additional lags (should be equal to maximum integration order);
-----OUTPUT:
-Ahat - estimated matrix of coefficient parameters
-leverage - this is calculated appropriately only for restricted cases (for bootstraps)
-----GLOBAL VARIABLES: none
-----EXTERNAL PROCEDURES: Insrtzero
-----NB: none.
-************************************************************************/
+/*
+**  Format :        { Ahat, leverage } = estvar_params(y, X, restrict, rvector1, order, addlags);
+**
+**  Author:         Scott Hacker
+**
+**  Input:
+**                  
+**      y           Data matrix adjusted for lags. Each column is a vector of 
+**                  observations on one. endogenous variable. Currently only works for 2 endog. 
+**                  variables.
+**      
+**      X           Vector, a column of ones appended to a matrix of lagged values for y.
+**
+**      restrict    Scalar, 1 means restrict the coefficient estimates so there is no Granger causality
+**                  0 means don't do that restriction.
+**
+**      rvector1    Row vector noting which variable coefficients are restricted to zero (1 indicates
+**                  where the restriction is).
+**
+**      order       Scalar, order of var system. This should be = 1 or 2.
+**
+**      addlags     Additional lags (should be equal to maximum integration order);
+**
+**  Output:
+**      Ahat        Estimated matrix of coefficient parameters
+**
+**      leverage    This is calculated appropriately only for restricted cases 
+**                  (for bootstraps).
+*/
 
-proc (2) = estvar_params (y, X, restrict, rvector1, order, addlags);
+proc (2) = estvar_params(y, X, restrict, rvector1, order, addlags);
     local numvars, maxlag, T, Xrestr1, Ahatrestr1, INVXTXXT2, H2, leverage2, INVXTXXTrest1,  Hrestr1, leverage, Ahat, Ahat2,i;
     numvars = cols(y);                 		@ # endog vars- currently this program only works for 2 @
     maxlag = order + addlags;
@@ -233,18 +252,21 @@ proc (2) = estvar_params (y, X, restrict, rvector1, order, addlags);
     retp(Ahat, leverage);
 endp;
 
-/**********************  PROC INSRTZERO *****************************
-----PROC insrtzero
-----AUTHOR: Scott Hacker
-----INPUT:
-orig: the original vector in which zeros will be placed.
-pattern: a vector denoting which elements in the new vector will have the inserted zeros
-----OUTPUT:
-new: the new vector with zeros inserted according the pattern vector
-----GLOBAL VARIABLES: none
-----EXTERNAL PROCEDURES: none
-----NB: none.
-**********************************************************************/
+/*
+**  Format :        newv = insrtzero(orig, pattern);
+**
+**  Author:         Scott Hacker
+**
+**  Input:
+**      orig        Vector, original vector in which zeros will be placed.
+**
+**      pattern     Vector denoting which elements in the new vector will 
+**                  have the inserted zeros.
+**
+**  Output:
+**      new         Vector, the new vector with zeros inserted according the 
+**                  pattern vector
+*/
 proc (1) = insrtzero(orig, pattern);
     local indx, newv, insrtpts;
     insrtpts = indexcat(pattern,1);
@@ -266,21 +288,25 @@ proc (1) = insrtzero(orig, pattern);
 endp;
 
 
-/*************************************************************************
-----PROC W_test
-----AUTHOR: Scott Hacker
-----INPUT:
-Y  - data matrix adjusted for lags. Each column is a vector of observations on one
-endogenous variable.
-X - a column of ones appended to a matrix of lagged values for y.
-Ahat - matrix of unrestricted coefficient estimates
-Rmatrix1 - matrix of restrictions
-----OUTPUT:
-Wstat - vector of Wald statistics
-----GLOBAL VARIABLES: none
-----EXTERNAL PROCEDURES: none
-----NB: none.
-************************************************************************/
+/*
+**  Format :
+**              Wstat = W_test(Y, X, Ahat, Rmatrix1);
+**
+**  Author:     Scott Hacker
+**
+**  Input:
+**  Y           Data matrix adjusted for lags. Each column is a vector of observations on one
+**              endogenous variable.
+**
+**  X           A column of ones appended to a matrix of lagged values for y.
+**
+**  Ahat        Matrix of unrestricted coefficient estimates
+**
+**  Rmatrix1    Matrix of restrictions
+**
+**  Output:
+**  Wstat       Vector of Wald statistics
+*/
 proc (1) = W_test(Y, X, Ahat, Rmatrix1);
     local RESunrestr, Estvarcov, zerosvector, vecAhat, f1, f2, InvXprX, Wstat;
     
@@ -296,28 +322,46 @@ proc (1) = W_test(Y, X, Ahat, Rmatrix1);
     retp(Wstat);
 endp;
 
-/*************************************************************************
-----PROC Bootstrap_Toda
-----AUTHOR: Scott Hacker
-----INPUT:
-y  - data matrix adjusted for lags. Each column is a vector of observations on one
-endogenous variable.
-X - ones column vector appended to a matrix of lagged values for y.
-zlags - first elements of original data matrix up to the number of lags.
-order  - order of var system.
-Ahat - estimated coefficient matrix for the VAR system
-leverage
-addlags - additional lags (should be equal to maximum integration order);
-order  - order of var system. This should be = 1 or 2.
-addlags - additional lags (should be equal to maximum integration order);
-bootsimmax - number of simulations for bootstrapping critical values
-Rmatrix1, Rmatrix2 - matrices of restrictions, tested separately
-----OUTPUT:
-Wcriticalvals - matrix of critical values for Wald statistics
-----GLOBAL VARIABLES: none
-----EXTERNAL PROCEDURES: estvar_params, W_test;
-----NB: none.
-************************************************************************/
+/*
+** Purpose
+**
+** Format:
+**       Wcriticalvals = Bootstrap_Toda(y, X, zlags, Ahat, leverage, order, addlags,bootsimmax, Rmatrix1);
+**
+** Author
+**       Scott Hacker
+**
+** Input:
+**
+**      y                   Data matrix adjusted for lags. Each column is a vector of observations on one
+**                          endogenous variable.
+**      
+**      x                   Matrix, ones column vector appended to a matrix of 
+**                          lagged values for y.
+**
+**      zlags               Matrix, first elements of original data matrix up 
+**                          to the number of lags.
+**
+**      order               Scalar, order of var system.
+**
+**      Ahat                Matrix, estimated coefficient matrix for the VAR system
+**
+**      leverage
+**
+**      addlags             Additional lags (should be equal to maximum integration order).
+**
+**      order               Order of var system. This should be = 1 or 2.
+**
+**      addlags             Additional lags (should be equal to maximum integration order).
+**
+**      bootsimmax          Scalar, number of simulations for bootstrapping critical values
+**
+**      Rmatrix1, Rmatrix2  Matrices of restrictions, tested separately
+**
+**  Output:
+**
+**      Wcriticalvals       Matrix of critical values for Wald statistics
+*/
 proc(1) = Bootstrap_Toda(y, X, zlags, Ahat, leverage, order, addlags,bootsimmax, Rmatrix1);
     local RES, adjRES, bootsim, numobs, maxlag, Wstatv, yhatrow, Xhat, obspull, index,
         simerr, zhat, yhat, AhatTU, Wstat, randomnumbers,
@@ -403,35 +447,34 @@ proc(1) = Bootstrap_Toda(y, X, zlags, Ahat, leverage, order, addlags,bootsimmax,
     retp(Wcriticalvals);
 endp;
 
-/*************************************************************************
-----PROC lag_length2
-----AUTHOR: Scott Hacker
-----ATTRIBUTION: Parts of this code are taken from proc LR_LAG
-written by David Rapach (may 27 1996 version).
-----INPUT:
-Z  - data matrix. Each column is a vector of observations on one
-endogenous variable
-minlag - minimum lag length
-p  - maximum lag length. This should be >= 2
-
-----OUTPUT: aiclag  - Lag length suggested by Akaike info criterion.
-aicclag - Lag length suggessted by corrected Akaike infoc criterion
-sbclag -  Lag length suggested by Schwarz-Bayesian criterion.
-hqclag - Lag length suggested by Hannon-Quinn criterion.
-hjclag - Lag length suggested by Hatermi-J criterion.
-aicA - Matrix of coefficient estimates based on aiclag.
-aiccA - Matrix of coefficient estimates based on aicclag.
-scbA - Matrix of coefficient estimates based on sblag.
-hqcA - Matrix of coefficient estimates based on hqlag.
-hjcA - Matrix of coefficient estimates based on hjlag.
-actlA - Matrix of coefficient estimates based on actual lag.
-onelA -Matrix of coefficient estimates based on one lag.
-nocando - 1 if not possible to find suggested lag lengths for the given Z,
-0 otherwise.
-----GLOBAL VARIABLES: none
-----EXTERNAL PROCEDURES: VARLAGS, by Alan G. Isaac
-----NB: none.
-************************************************************************/
+/*
+** 
+** Purpose:
+**
+** Format:
+**       { iclag, icA, onelA, nocando } = lag_length2(z, minlag, p, infocrit)
+**
+**       Author: Scott Hacker
+**       Attribution: Parts of this code are taken from proc LR_LAG
+**       written by David Rapach (may 27 1996 version).
+**
+** Input :
+**      Z           Data matrix. Each column is a vector of observations on one, endogenous variable
+**
+**      minlag      Scalar, minimum lag length.
+**
+**      p           Scalar, maximum lag length. This should be >= 2.
+**
+**  Output
+**      iclag       Scalar, lag length suggested by the chosen info criterion.
+**
+**      icA         Matrix, coefficient estimates based on chosen info criterion.
+**
+**      onelA       Matrix, coefficient estimates based on one lag.
+**
+**      nocando     Scalar, 1 if not possible to find suggested lag lengths for the given Z,
+**                  0 otherwise.
+*/
 
 proc (4) = lag_length2(z, minlag, p, infocrit);
     local M, Y, ylags, T,i, j, lag_guess,X , Ahat, RES, VARCOV, onelA, nocando;

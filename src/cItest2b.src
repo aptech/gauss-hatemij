@@ -168,18 +168,19 @@ endp;
 @ -------------------------------------------------------------- @
 
 
-/**********************  PROC ADF  *****************************
-**   FORMAT
-**          { stat,lag } = adf(y,x)
-**   INPUT
-**        y - dependent variable
-**        x - independent variables
-**   OUTPUT
-**  stata - ADF statistic
-**  lag - the lag length
-**   GLOBAL VARIABLES: none
-**   EXTERNAL PROCEDURES: estimate
-**********************************************************************/
+/*
+**   Format
+**                { stat,lag } = adf(y, x, kmax, choice)
+**   Input
+**        y       Vector, dependent variable.
+**
+**        x       Vector, independent variables.
+**
+**   Output
+**        stat    ADF statistic
+**  
+**        lag     The lag length
+*/
 
 /*
 *************** Modified ADF for each breakpoint ********************
@@ -240,17 +241,22 @@ endp;
 
 
 
-/**********************  PROC PHILLIPS  *****************************
-**   FORMAT
-**  { za,zt } = phillips(y,x)
-**   INPUT
-**  y  - dependent variable
-**  x - independent variables
-**   OUTPUT
-**  za - the Phillips test statistic
-**  zt -  the Phillips test statistic
-**   GLOBAL VARIABLES: none
-**********************************************************************/
+/*
+**  Format :
+**  { za,zt } = phillips(y, x)
+**
+**  Input :
+**  
+**      y       Vector, dependent variable.
+**
+**      x       Vector, independent variables.
+
+**  Output
+**
+**     za       The Phillips test statistic
+**  
+**     zt        The Phillips test statistic
+*/
 
 /*
 *************** Modified Za or Zt for each breakpoint ********************
@@ -299,20 +305,24 @@ endp;
 @ ------------------------------------------------------------ @
 
 
-/**********************  PROC ESTIMATE  *****************************
-**   FORMAT
-**          { b,e,sig2,se } = estimate(y,x)
-**   INPUT
-**        y  - dependent variable
-**        x - independent variables
-**   OUTPUT
-**  b - OLS estimates
-**  e - residuals
-**  sig2 - variance
-**  se - standard error for coefficients
-**   GLOBAL VARIABLES: none
-** Procedure written by Bruce Hansen
-**********************************************************************/
+/**
+**   Format:
+**          { b, e, sig2, se } = estimate(y, x)
+**
+**   Input:
+**          y       Vector, dependent variable.
+**
+**          x       Matrix, independent variables.
+**
+**   Output:
+**          b       Vector, OLS estimates.
+**
+**          e       Vector, residuals.
+**
+**          sig2    Matrix, variance.
+**
+**          se      Standard error for coefficients
+*/
 /* *****  ols regression ****** */
 proc(4) = estimate(y, x);
     local m, b, e, sig2, se;
