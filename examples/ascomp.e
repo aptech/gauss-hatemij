@@ -16,6 +16,7 @@ outwidth 200;
 
 // Make sure screen in on
 screen on;
+#include actest.src
 
 /*
 ** Load data
@@ -23,10 +24,11 @@ screen on;
 
 // Indicate filename can be .csv, .xls, .xlsx,
 // .dat, .dta, SAS7BDAT, SAS7BCAT, HDF5
-fname = ;
+fname = __FILE_DIR $+ "/nelsonplosser.dta";
+formula = "m+bnd";
 
 // Load data file 
-YZlevel  = loadd(fname);	
+YZlevel  = packr(loadd(fname, formula));	
 
 // Specify whether to use log form
 ln_form = 0;
